@@ -40,6 +40,12 @@ $ npm test
 ...
 ```
 
+Run using normal Node JS for quick development, comment away GHA related function
+```
+npx tsc -w  main.ts
+nodemon main.js
+```
+
 ## Change action.yml
 
 The action.yml defines the inputs and output for your action.

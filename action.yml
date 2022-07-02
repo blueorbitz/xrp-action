@@ -9,9 +9,17 @@ inputs:
     required: true
     description: 'XRP network to accept donation'
     default: 'testnet'
+  pr-number:
+    required: true
+    description: 'Current PR number'
+  repo-token:
+    required: true
+    description: 'Repo token'
 outputs:
   status:
     description: 'status of the action'
+  data:
+    description: 'test output'
 runs:
   using: 'node16'
   main: 'dist/index.js'

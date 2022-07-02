@@ -1,4 +1,4 @@
-name: 'build-test'
+name: 'Update PR label'
 on:
   pull_request:
     types: [opened, reopened, 'edited', 'closed']
@@ -9,10 +9,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Check donation request
-        id: donation_request
+        id: check
         uses: ./
         with:
           address: ${{ secrets.XRP_OWNER_ADDRESS }}
           network: testnet
+          pr-number: ${{ github.event.number }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get status
-        run: echo "Return status ${{ steps.donation_request.outputs.status }}"
+        run: echo "Return status ${{ steps.check.outputs.status }}"
