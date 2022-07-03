@@ -34,6 +34,8 @@ Provide the include this into the steps:
     network: testnet // or mainnet
     pr-number: ${{ github.event.number }}
     repo-token: ${{ secrets.GITHUB_TOKEN }}
+  env:
+    XRP_DONATION_URL: https://xrp-donation-app.vercel.app
 ```
 
 Refer to workflow `pr-labeling.yml` for example.
