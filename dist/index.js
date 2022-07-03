@@ -148,6 +148,7 @@ function githubQuery() {
   }`;
         const response_query = yield axios.post(GRAPHQL_URL, { query }, { headers });
         log.debug(`response: ${JSON.stringify(response_query.data)}`);
+        log.setOutput('data', JSON.stringify(response_query.data, null, 2));
         const pullRequest = response_query.data.data.repository.pullRequest;
         const xrpLabels = response_query.data.data.repository.labels.nodes;
         const prId = pullRequest.id;
