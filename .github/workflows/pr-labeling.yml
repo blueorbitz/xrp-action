@@ -23,3 +23,5 @@ jobs:
           XRP_DONATION_URL: https://xrp-donation-app.vercel.app
       - name: Get status
         run: echo "Return status ${{ steps.check.outputs.status }}"
+      - name: Get data
+        run: echo "Return data ${{ steps.check.outputs.data }}"
