@@ -83,7 +83,7 @@ function run() {
             const insertedXrpLabels = intersects([DONATION_New, DONATION_Fund, DONATION_Done], (_a = prLabels === null || prLabels === void 0 ? void 0 : prLabels.map(o => o.name)) !== null && _a !== void 0 ? _a : []);
             if (insertedXrpLabels.length === 0) { // No label in the list
                 yield githubMutationLabels(prId, labelIdsWithXrpState(DONATION_New));
-                const donationUrl = `${XRP_DONATION_URL}/${repo}/${prNumber}?addres=${address}&network=${network}&target=${target}`;
+                const donationUrl = `${XRP_DONATION_URL}/${repo}/${prNumber}?address=${address}&network=${network}&target=${target}`;
                 yield githubMutationComment(prId, `<strong>XRPDonation</strong> link - <a href=\\"${donationUrl}\\">XRP OSS Donation Page</a>`);
                 log.setOutput('status', DONATION_New + ' - added');
                 return;

@@ -67,7 +67,7 @@ async function run(): Promise<void> {
     const insertedXrpLabels = intersects([DONATION_New, DONATION_Fund, DONATION_Done], prLabels?.map(o => o.name) ?? []);
     if (insertedXrpLabels.length === 0) { // No label in the list
       await githubMutationLabels(prId, labelIdsWithXrpState(DONATION_New));
-      const donationUrl = `${XRP_DONATION_URL}/${repo}/${prNumber}?addres=${address}&network=${network}&target=${target}`;
+      const donationUrl = `${XRP_DONATION_URL}/${repo}/${prNumber}?address=${address}&network=${network}&target=${target}`;
       await githubMutationComment(prId, `<strong>XRPDonation</strong> link - <a href=\\"${donationUrl}\\">XRP OSS Donation Page</a>`);
       log.setOutput('status', DONATION_New + ' - added');
       return;
