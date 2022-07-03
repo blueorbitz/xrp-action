@@ -10,6 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Echo number
+        run: echo "Return status ${{ github.event.number }}"
+      - name: Echo issue number
+        run: echo "Return status ${{ github.event.issue.number }}"
       - name: Check donation request
         id: check
         uses: ./
