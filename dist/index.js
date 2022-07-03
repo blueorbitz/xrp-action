@@ -50,7 +50,7 @@ const GRAPHQL_URL = process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/gr
 const XRP_DONATION_URL = process.env.XRP_DONATION_URL || 'http://localhost:/3000';
 const address = !DEBUG ? core.getInput('address') : (process.env.XRP_ADDRESS || 'rwyZN9Kp7AyjtLSTv9DWzbuUtXEPj9zodP');
 const network = !DEBUG ? core.getInput('network') : 'testnet';
-const prNumber = !DEBUG ? core.getInput('pr-number') : '10';
+const prNumber = !DEBUG ? core.getInput('pr-number') : '11';
 const token = !DEBUG ? core.getInput('repo-token') : (process.env.GITHUB_TOKEN || '');
 const repo = process.env.GITHUB_REPOSITORY || 'blueorbitz/xrp-donation-action';
 const [owner, name] = repo.split('/');
@@ -74,6 +74,10 @@ function run() {
                 return newList.map(o => o.id);
             };
             // validated labels
+            if (target == null) {
+                log.setOutput('status', 'XRPDonationTarget - not found');
+                return;
+            }
             validateXrpLabelsExist(xrpLabels !== null && xrpLabels !== void 0 ? xrpLabels : []);
             // update logic start here
             const insertedXrpLabels = intersects([DONATION_New, DONATION_Fund, DONATION_Done], (_a = prLabels === null || prLabels === void 0 ? void 0 : prLabels.map(o => o.name)) !== null && _a !== void 0 ? _a : []);
