@@ -2,6 +2,8 @@ name: 'Update PR label'
 on:
   pull_request:
     types: [opened, reopened, 'edited', 'closed']
+  issue_comment:
+    types: [created]
 
 jobs:
   set_xrp_label:
