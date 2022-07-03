@@ -20,5 +20,6 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          XRP_DONATION_URL: https://xrp-donation-app.vercel.app
       - name: Get status
         run: echo "Return status ${{ steps.check.outputs.status }}"
