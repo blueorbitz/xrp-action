@@ -37,40 +37,81 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const axios = __nccwpck_require__(6545).default;
+const DEBUG = false;
+const log = {
+    setOutput: DEBUG ? console.log : core.setOutput,
+    setFailed: DEBUG ? console.error : core.setFailed,
+    debug: DEBUG ? console.log : core.debug,
+};
 const DONATION_New = 'XRPDonation:New';
 const DONATION_Fund = 'XRPDonation:Funding';
 const DONATION_Done = 'XRPDonation:Done';
 const GRAPHQL_URL = process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql';
-const address = core.getInput('address');
-const network = core.getInput('network');
-const prNumber = core.getInput('pr-number');
-const token = core.getInput('repo-token');
-const repo = process.env.GITHUB_REPOSITORY || '';
+// const address: string = core.getInput('address');
+// const network: string = core.getInput('network');
+const prNumber = !DEBUG ? core.getInput('pr-number') : '10';
+const token = !DEBUG ? core.getInput('repo-token') : (process.env.GITHUB_TOKEN || '');
+const repo = process.env.GITHUB_REPOSITORY || 'blueorbitz/xrp-donation-action';
 const [owner, name] = repo.split('/');
-core.debug(`processing for: ${owner} / ${name} / ${prNumber}`);
+log.debug(`processing for: ${owner} / ${name} / ${prNumber}`);
 ;
 function run() {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const query = yield githubQuery();
-            const intersect = [DONATION_New, DONATION_Fund, DONATION_Done]
-                .filter(value => { var _a; return (_a = query.prLabels) === null || _a === void 0 ? void 0 : _a.map(o => o.name).includes(value); });
-            if (intersect.length > 0) {
-                core.setOutput('status', `no change`);
-                return; // done deal, no need to do anything
+            const { prId, prLabels, prComments, xrpLabels } = yield githubQuery();
+            // nested functions
+            const labelsIn = (search) => (prLabels !== null && prLabels !== void 0 ? prLabels : []).map(o => o.name).indexOf(search) !== -1;
+            const intersects = (a, b) => a.filter(value => b.includes(value));
+            const labelIdsWithXrpState = (status) => {
+                const statusLabel = xrpLabels === null || xrpLabels === void 0 ? void 0 : xrpLabels.find(o => o.name === status);
+                const newList = (prLabels !== null && prLabels !== void 0 ? prLabels : [])
+                    .filter((value) => value.name !== DONATION_New)
+                    .filter((value) => value.name !== DONATION_Fund)
+                    .filter((value) => value.name !== DONATION_Done);
+                statusLabel && newList.push(statusLabel);
+                return newList.map(o => o.id);
+            };
+            // validated labels
+            validateXrpLabelsExist(xrpLabels !== null && xrpLabels !== void 0 ? xrpLabels : []);
+            // update logic start here
+            const insertedXrpLabels = intersects([DONATION_New, DONATION_Fund, DONATION_Done], (_a = prLabels === null || prLabels === void 0 ? void 0 : prLabels.map(o => o.name)) !== null && _a !== void 0 ? _a : []);
+            if (insertedXrpLabels.length === 0) { // No label in the list
+                // TODO: Insert/replace new label
+                yield githubMutation(prId, labelIdsWithXrpState(DONATION_New));
+                log.setOutput('status', DONATION_New + ' - added');
+                return;
             }
-            const labelNew = (_a = query.xrpLabels) === null || _a === void 0 ? void 0 : _a.find(o => o.name === DONATION_New);
-            if (labelNew == null)
-                throw new Error("XRPDonation labels not set!");
-            const labelIds = ((_b = query.prLabels) === null || _b === void 0 ? void 0 : _b.map(o => o.id)) || [];
-            labelIds.push(labelNew.id);
-            yield githubMutation(query.prId, labelIds);
-            core.setOutput('status', `success`);
+            if (((_b = prComments === null || prComments === void 0 ? void 0 : prComments.length) !== null && _b !== void 0 ? _b : 0) === 0) { // No comment, nothing to update
+                log.setOutput('status', DONATION_New + ' - no comment');
+                return;
+            }
+            let lastComment = '';
+            if (prComments === null || prComments === void 0 ? void 0 : prComments.length)
+                lastComment = prComments[0].body;
+            log.debug('last comment', lastComment);
+            const isTargetAchieved = /XRPDonation:Achieved/.exec(lastComment) != null;
+            const isFundingAdded = /XRPDonation:Funded/.exec(lastComment) != null;
+            log.debug('isTargetAchieved', isTargetAchieved, 'isFundingAdded', isFundingAdded);
+            if (isFundingAdded && labelsIn(DONATION_New)) { // Transition fund
+                yield githubMutation(prId, labelIdsWithXrpState(DONATION_Fund));
+                log.setOutput('status', DONATION_Fund + ' - updated');
+                return;
+            }
+            if (isFundingAdded) { // Adding more fund
+                log.setOutput('status', DONATION_Fund + ' - no change');
+                return;
+            }
+            if (isTargetAchieved && !labelsIn(DONATION_Done)) { // Transition to done
+                yield githubMutation(prId, labelIdsWithXrpState(DONATION_Done));
+                log.setOutput('status', DONATION_Done + ' - updated');
+                return;
+            }
+            log.setOutput('status', 'No action');
         }
         catch (error) {
             if (error instanceof Error)
-                core.setFailed(error.message);
+                log.setFailed(error.message);
         }
     });
 }
@@ -90,6 +131,9 @@ function githubQuery() {
             node { id name }
           }
         }
+        comments(last: 1) {
+          nodes { body }
+        }
       }
       labels(query: "XRPDonation", first: 10) {
         nodes { id name }
@@ -97,18 +141,19 @@ function githubQuery() {
     }
   }`;
         const response_query = yield axios.post(GRAPHQL_URL, { query }, { headers });
-        // core.debug(`response: ${JSON.stringify(response_query)}`);
+        log.debug(`response: ${JSON.stringify(response_query.data)}`);
         const pullRequest = response_query.data.data.repository.pullRequest;
         const xrpLabels = response_query.data.data.repository.labels.nodes;
         const prId = pullRequest.id;
         const prBody = pullRequest.bodyText;
         const prLabels = pullRequest.labels.edges.map((o) => o.node);
+        const prComments = pullRequest.comments.nodes;
         const regex = /XRPDonationTarget: (\d+.?\d*)/;
         const exec = regex.exec(prBody);
         if (exec == null)
             return { prId };
         const target = parseFloat(exec[1]);
-        return { prId, target, prLabels, xrpLabels };
+        return { prId, target, prLabels, prComments, xrpLabels };
     });
 }
 function githubMutation(prId, labelIds) {
@@ -130,6 +175,17 @@ function githubMutation(prId, labelIds) {
   }`;
         yield axios.post(GRAPHQL_URL, { query }, { headers });
     });
+}
+function validateXrpLabelsExist(xrpLabels) {
+    const labelNew = xrpLabels === null || xrpLabels === void 0 ? void 0 : xrpLabels.find(o => o.name === DONATION_New);
+    if (labelNew == null)
+        throw new Error(DONATION_New + " label not set!");
+    const labelFund = xrpLabels === null || xrpLabels === void 0 ? void 0 : xrpLabels.find(o => o.name === DONATION_Fund);
+    if (labelFund == null)
+        throw new Error(DONATION_Fund + " label not set!");
+    const labelDone = xrpLabels === null || xrpLabels === void 0 ? void 0 : xrpLabels.find(o => o.name === DONATION_Done);
+    if (labelDone == null)
+        throw new Error(DONATION_Done + " label not set!");
 }
 run();
 
