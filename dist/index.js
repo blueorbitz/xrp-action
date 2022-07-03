@@ -47,8 +47,9 @@ const DONATION_New = 'XRPDonation:New';
 const DONATION_Fund = 'XRPDonation:Funding';
 const DONATION_Done = 'XRPDonation:Done';
 const GRAPHQL_URL = process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/graphql';
-// const address: string = core.getInput('address');
-// const network: string = core.getInput('network');
+const XRP_DONATION_URL = process.env.XRP_DONATION_URL || 'http://localhost:/3000';
+const address = !DEBUG ? core.getInput('address') : (process.env.XRP_ADDRESS || 'rwyZN9Kp7AyjtLSTv9DWzbuUtXEPj9zodP');
+const network = !DEBUG ? core.getInput('network') : 'testnet';
 const prNumber = !DEBUG ? core.getInput('pr-number') : '10';
 const token = !DEBUG ? core.getInput('repo-token') : (process.env.GITHUB_TOKEN || '');
 const repo = process.env.GITHUB_REPOSITORY || 'blueorbitz/xrp-donation-action';
@@ -59,7 +60,7 @@ function run() {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const { prId, prLabels, prComments, xrpLabels } = yield githubQuery();
+            const { prId, target, prLabels, prComments, xrpLabels } = yield githubQuery();
             // nested functions
             const labelsIn = (search) => (prLabels !== null && prLabels !== void 0 ? prLabels : []).map(o => o.name).indexOf(search) !== -1;
             const intersects = (a, b) => a.filter(value => b.includes(value));
@@ -77,8 +78,9 @@ function run() {
             // update logic start here
             const insertedXrpLabels = intersects([DONATION_New, DONATION_Fund, DONATION_Done], (_a = prLabels === null || prLabels === void 0 ? void 0 : prLabels.map(o => o.name)) !== null && _a !== void 0 ? _a : []);
             if (insertedXrpLabels.length === 0) { // No label in the list
-                // TODO: Insert/replace new label
-                yield githubMutation(prId, labelIdsWithXrpState(DONATION_New));
+                yield githubMutationLabels(prId, labelIdsWithXrpState(DONATION_New));
+                const donationUrl = `${XRP_DONATION_URL}/${repo}/${prNumber}?addres=${address}&network=${network}&target=${target}`;
+                yield githubMutationComment(prId, `<strong>XRPDonation</strong> link - <a href="${donationUrl}>XRP OSS Donation Page</a>`);
                 log.setOutput('status', DONATION_New + ' - added');
                 return;
             }
@@ -94,7 +96,7 @@ function run() {
             const isFundingAdded = /XRPDonation:Funded/.exec(lastComment) != null;
             log.debug('isTargetAchieved', isTargetAchieved, 'isFundingAdded', isFundingAdded);
             if (isFundingAdded && labelsIn(DONATION_New)) { // Transition fund
-                yield githubMutation(prId, labelIdsWithXrpState(DONATION_Fund));
+                yield githubMutationLabels(prId, labelIdsWithXrpState(DONATION_Fund));
                 log.setOutput('status', DONATION_Fund + ' - updated');
                 return;
             }
@@ -103,7 +105,7 @@ function run() {
                 return;
             }
             if (isTargetAchieved && !labelsIn(DONATION_Done)) { // Transition to done
-                yield githubMutation(prId, labelIdsWithXrpState(DONATION_Done));
+                yield githubMutationLabels(prId, labelIdsWithXrpState(DONATION_Done));
                 log.setOutput('status', DONATION_Done + ' - updated');
                 return;
             }
@@ -156,7 +158,7 @@ function githubQuery() {
         return { prId, target, prLabels, prComments, xrpLabels };
     });
 }
-function githubMutation(prId, labelIds) {
+function githubMutationLabels(prId, labelIds) {
     return __awaiter(this, void 0, void 0, function* () {
         const headers = {
             'content-type': 'application/json',
@@ -171,6 +173,20 @@ function githubMutation(prId, labelIds) {
           nodes { id name }
         }
       }
+    }
+  }`;
+        yield axios.post(GRAPHQL_URL, { query }, { headers });
+    });
+}
+function githubMutationComment(prId, comment) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const headers = {
+            'content-type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        };
+        const query = `mutation {
+    addComment(input: {subjectId: "${prId}", body: "${comment}"}) {
+      subject { id }
     }
   }`;
         yield axios.post(GRAPHQL_URL, { query }, { headers });
