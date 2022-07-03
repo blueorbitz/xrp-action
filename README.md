@@ -32,7 +32,7 @@ Provide the include this into the steps:
   with:
     address: ${{ secrets.XRP_OWNER_ADDRESS }}
     network: testnet // or mainnet
-    pr-number: ${{ github.event.number }}
+    pr-number: ${{ github.event.number || github.event.issue.number }}
     repo-token: ${{ secrets.GITHUB_TOKEN }}
   env:
     XRP_DONATION_URL: https://xrp-donation-app.vercel.app
