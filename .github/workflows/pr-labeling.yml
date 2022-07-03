@@ -20,7 +20,7 @@ jobs:
         with:
           address: ${{ secrets.XRP_OWNER_ADDRESS }}
           network: testnet
-          pr-number: ${{ github.event.number }}
+          pr-number: ${{ github.event.number || github.event.issue.number }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
