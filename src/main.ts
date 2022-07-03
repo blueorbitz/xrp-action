@@ -16,7 +16,7 @@ const GRAPHQL_URL = process.env.GITHUB_GRAPHQL_URL || 'https://api.github.com/gr
 const XRP_DONATION_URL = process.env.XRP_DONATION_URL || 'http://localhost:/3000';
 const address: string = !DEBUG ? core.getInput('address') : (process.env.XRP_ADDRESS || 'rwyZN9Kp7AyjtLSTv9DWzbuUtXEPj9zodP');
 const network: string = !DEBUG ? core.getInput('network') : 'testnet';
-const prNumber: string = !DEBUG ? core.getInput('pr-number') : '10';
+const prNumber: string = !DEBUG ? core.getInput('pr-number') : '11';
 const token: string = !DEBUG ? core.getInput('repo-token') : (process.env.GITHUB_TOKEN || '');
 const repo: string = process.env.GITHUB_REPOSITORY || 'blueorbitz/xrp-donation-action';
 const [owner, name] = repo.split('/');
@@ -56,6 +56,11 @@ async function run(): Promise<void> {
     }
 
     // validated labels
+    if (target == null) {
+      log.setOutput('status', 'XRPDonationTarget - not found');
+      return;
+    }
+
     validateXrpLabelsExist(xrpLabels ?? []);
 
     // update logic start here
