@@ -1,14 +1,62 @@
+# XRP Donation Action
+
+This is the Github custom action implementation for listening to Github action workflow related to XRP Donation and to provide the related updates base on the donation interaction on Xumm Wallet.
+
+For more information refer to the sister projec: [XRP-Donation-App](https://github.com/blueorbitz/xrp-donation-app).
+
 <p align="center">
   <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
 </p>
 
-# Create a JavaScript Action using TypeScript
+## How to use
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
+Make sure to have the following labels configure in your repository:
+- XRPDonation:New
+- XRPDonation:Funding
+- XRPDonation:Done
 
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
+PS: *this is due to github does not support create label api at the moment*
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
+Create a github action yml. It should listed to the following:
+```
+on:
+  pull_request:
+    types: [opened, reopened, 'edited', 'closed']
+  issue_comment:
+    types: [created]
+```
+
+Provide the include this into the steps:
+```
+  uses: blueorbitz/xrp-donation-action@latest
+  with:
+    address: ${{ secrets.XRP_OWNER_ADDRESS }}
+    network: testnet // or mainnet
+    pr-number: ${{ github.event.number }}
+    repo-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+Refer to workflow `pr-labeling.yml` for example.
+
+## How it workflows
+
+1. When PR is created, include the following detail as part of the PR message: `XRPDonationTarget: {amount of XRP}`
+1. The custom action will pickup the content and decode the message accordingly.
+1. A Pull Request comment will be added for contributor to click on the link and send donation through it.
+1. When the payment is received, we used the comment section to triggers the workflow for the update.
+1. Pull Request label will be updated accordingly based on the status of the Donation target.
+
+## Quick deveploment tips
+Run using normal Node JS for quick development:
+
+Edit `const DEBUG = false;` to `true`, and run the following 2 command in separate console.
+```
+npx tsc -w  src/main.ts
+nodemon src/main.js
+```
+
+## Forked project from 
+https://github.com/actions/typescript-action
 
 ## Create an action from this template
 
@@ -38,12 +86,6 @@ $ npm test
   ✓ test runs (95ms)
 
 ...
-```
-
-Run using normal Node JS for quick development, comment away GHA related function
-```
-npx tsc -w  main.ts
-nodemon main.js
 ```
 
 ## Change action.yml
