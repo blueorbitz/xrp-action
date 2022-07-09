@@ -1,12 +1,15 @@
 # XRP Donation Action
 
+<p>
+  <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
+</p>
+
 This is the Github custom action implementation for listening to Github action workflow related to XRP Donation and to provide the related updates base on the donation interaction on Xumm Wallet.
 
 For more information refer to the sister projec: [XRP-Donation-App](https://github.com/blueorbitz/xrp-donation-app).
 
-<p align="center">
-  <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
-</p>
+## Video and Demo
+https://youtu.be/ULanS935bKY
 
 ## How to use
 
