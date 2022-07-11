@@ -9,7 +9,7 @@ This is the Github custom action implementation for listening to Github action w
 For more information refer to the sister projec: [XRP-Donation-App](https://github.com/blueorbitz/xrp-donation-app).
 
 ## Video and Demo
-https://youtu.be/ULanS935bKY
+[Youtube Demo](https://youtu.be/C4AWsdibkIk)
 
 ## How to use
 
