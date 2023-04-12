@@ -9,7 +9,7 @@ jobs:
   set_xrp_label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v3.5.1
       - name: Echo number
         run: echo "Return status ${{ github.event.number }}"
       - name: Echo issue number
